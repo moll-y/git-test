@@ -3,6 +3,8 @@
 
 #include <SDL2/SDL.h>
 
+#include "texture_manager.h"
+
 class Game {
  public:
   Game() {}
@@ -18,6 +20,7 @@ class Game {
   bool running;
   SDL_Window* window;
   SDL_Renderer* renderer;
+  int currentFrame;
 };
 
 #endif
