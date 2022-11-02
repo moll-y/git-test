@@ -8,8 +8,14 @@
 #include <SDL2/SDL_video.h>
 
 #include <iostream>
+#include <vector>
 
+#include "enemy.h"
+#include "game_object.h"
+#include "player.h"
 #include "texture_manager.h"
+
+Game* Game::instance = 0;
 
 bool Game::init(const char* title, int xpos, int ypos, int height, int width,
                 bool fullscreen) {
@@ -43,13 +49,21 @@ bool Game::init(const char* title, int xpos, int ypos, int height, int width,
   // Set to black.
   SDL_SetRenderDrawColor(this->renderer, 255, 0, 0, 255);
 
-  TheTextureManager::get_instance()->load("assets/animate-alpha.png", "animate",
-                                          this->renderer);
+  if (!TheTextureManager::get_instance()->load("assets/animate-alpha.png",
+                                               "animate", this->renderer)) {
+    std::cout << "Couldn't load assets\n";
+    return false;
+  };
+
+  this->game_objects.push_back(
+      new Player(new LoaderParams(100, 100, 128, 82, "animate")));
+  this->game_objects.push_back(
+      new Enemy(new LoaderParams(300, 300, 128, 82, "animate")));
 
   // Everything inited successfully, start the main loop.
   this->running = true;
 
-  std::cout << "init() success\n";
+  std::cout << "init success\n";
   return true;
 }
 
@@ -57,21 +71,22 @@ void Game::render() {
   // Clear the renderer to the drow color.
   SDL_RenderClear(this->renderer);
 
-  TheTextureManager::get_instance()->draw("animate", 0, 0, 128, 82,
-                                          this->renderer);
-  TheTextureManager::get_instance()->drawFrame(
-      "animate", 100, 100, 128, 82, 1, this->currentFrame, this->renderer);
+  // Loop through our objects and draw them.
+  for (std::vector<GameObject*>::size_type i = 0; i < this->game_objects.size();
+       i++) {
+    this->game_objects[i]->draw();
+  }
 
   // Draw to the screen.
   SDL_RenderPresent(this->renderer);
 }
 
 void Game::update() {
-  const int ticks = SDL_GetTicks();
-  std::cout << "SDL_GetTicks(): " << ticks << "\n";
-  std::cout << "SDL_GetTicks() / 100: " << ticks / 100 << "\n";
-  std::cout << "(SDL_GetTicks() / 100) % 6: " << (ticks / 100) % 6 << "\n";
-  this->currentFrame = int(((ticks / 100) % 6));
+  // Loop through and update our objects
+  for (std::vector<GameObject*>::size_type i = 0; i < this->game_objects.size();
+       i++) {
+    this->game_objects[i]->update();
+  }
 }
 
 void Game::handle_events() {
